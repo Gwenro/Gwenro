@@ -1,0 +1,389 @@
+import pandas as pd
+import numpy as np
+import pandas_profiling as pprof
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn import decomposition
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+%matplotlib inline
+#loads data frame
+final = pd.read_csv('Ben-TRAIN.csv', sep=',')
+#initial data analysis
+rpt = pprof.ProfileReport(final)
+rpt;
+Preprocessing
+#Converting columns to appropriate dtypes
+final = final.replace({'LeftUnion': {'Yes':1, 'No':0}})
+final = final.replace({'Management': {0:'True', 1:'False'}})
+final.TotalDues = pd.to_numeric(final.TotalDues, errors='coerce')
+
+#Fill any NaN w/ 0
+final = final.replace(np.nan, 0)
+
+## Vectorization for Categorical Variables
+
+X_num = final.select_dtypes(include=[int,float])
+
+X_cat = final.select_dtypes(include=object)
+X_cat = X_cat.drop(['ID'],1)
+
+# Creating dummies for X_cat
+
+X_enc = pd.get_dummies(X_cat)
+
+# combining dataframes
+X = pd.concat([X_num, X_enc],axis=1)
+
+# removing the repetitive features that were added from the categorical standardization
+X = X.drop(columns=['gender_Male', 'Management_False', 'USAcitizen_No', 'Married_No', 'ContinuingEd_No', 'StateOfResidence_IL',
+                   'PaperlessBilling_No'])
+
+X.T
+
+  X_cat = X_cat.drop(['ID'],1)
+0	1	2	3	4	5	6	7	8	9	...	2989	2990	2991	2992	2993	2994	2995	2996	2997	2998
+MonthsInUnion	52.00	7.00	10.00	61.00	3.0	37.00	1.0	6.00	7.00	818.00	...	7.0	2.0	53.0	33.00	46.0	22.00	69.00	4.00	4.0	1.0
+MonthlyDues	109.10	69.20	70.15	99.40	79.9	26.45	50.6	70.55	20.35	95.05	...	35.3	20.0	25.1	88.95	24.9	96.70	93.30	75.35	20.4	74.3
+TotalDues	5647.95	477.55	735.50	5943.65	260.9	911.60	50.6	433.95	150.60	77750.90	...	264.8	40.9	1275.6	3027.65	1174.8	2082.95	6398.05	273.40	94.5	74.3
+LeftUnion	0.00	0.00	0.00	0.00	1.0	0.00	1.0	0.00	0.00	0.00	...	0.0	0.0	0.0	0.00	0.0	1.00	0.00	0.00	0.0	1.0
+gender_Female	1.00	1.00	0.00	0.00	0.0	1.00	0.0	1.00	1.00	1.00	...	0.0	1.0	1.0	0.00	0.0	0.00	1.00	0.00	1.0	1.0
+Management_True	0.00	1.00	1.00	1.00	0.0	1.00	1.0	1.00	1.00	1.00	...	1.0	1.0	0.0	1.00	1.0	0.00	1.00	0.00	1.0	1.0
+USAcitizen_Yes	1.00	1.00	0.00	1.00	0.0	1.00	0.0	0.00	0.00	0.00	...	0.0	0.0	1.0	0.00	1.0	0.00	1.00	0.00	0.0	0.0
+Married_Yes	0.00	0.00	0.00	0.00	0.0	1.00	1.0	0.00	0.00	0.00	...	0.0	0.0	0.0	0.00	1.0	0.00	1.00	0.00	1.0	0.0
+ContinuingEd_Yes	1.00	1.00	1.00	1.00	1.0	1.00	1.0	1.00	1.00	1.00	...	0.0	1.0	1.0	1.00	1.0	1.00	1.00	1.00	1.0	1.0
+StateOfResidence_MO	0.00	1.00	1.00	0.00	1.0	0.00	1.0	1.00	1.00	0.00	...	1.0	1.0	0.0	1.00	0.0	0.00	0.00	1.00	1.0	1.0
+Connectivity_DSL	0.00	0.00	0.00	0.00	0.0	0.00	1.0	0.00	0.00	0.00	...	1.0	0.0	0.0	0.00	0.0	0.00	0.00	0.00	0.0	0.0
+Connectivity_Fiber optic	1.00	1.00	1.00	1.00	1.0	0.00	0.0	1.00	0.00	1.00	...	0.0	0.0	0.0	1.00	0.0	1.00	1.00	1.00	0.0	1.0
+Connectivity_No	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureA_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureA_No	0.00	1.00	1.00	0.00	1.0	0.00	0.0	1.00	0.00	1.00	...	0.0	0.0	0.0	0.00	0.0	1.00	1.00	0.00	0.0	1.0
+FeatureA_Yes	1.00	0.00	0.00	1.00	0.0	0.00	1.0	0.00	0.00	0.00	...	1.0	0.0	0.0	1.00	0.0	0.00	0.00	1.00	0.0	0.0
+FeatureB_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureB_No	0.00	1.00	1.00	1.00	1.0	0.00	1.0	1.00	0.00	1.00	...	1.0	0.0	0.0	1.00	0.0	1.00	0.00	1.00	0.0	0.0
+FeatureB_Yes	1.00	0.00	0.00	0.00	0.0	0.00	0.0	0.00	0.00	0.00	...	0.0	0.0	0.0	0.00	0.0	0.00	1.00	0.00	0.0	1.0
+FeatureC_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureC_No	0.00	1.00	1.00	0.00	1.0	0.00	1.0	1.00	0.00	0.00	...	0.0	0.0	0.0	1.00	0.0	1.00	1.00	1.00	0.0	1.0
+FeatureC_Yes	1.00	0.00	0.00	1.00	0.0	0.00	0.0	0.00	0.00	1.00	...	1.0	0.0	0.0	0.00	0.0	0.00	0.00	0.00	0.0	0.0
+FeatureD_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureD_No	1.00	1.00	1.00	0.00	1.0	0.00	1.0	1.00	0.00	0.00	...	1.0	0.0	0.0	0.00	0.0	1.00	0.00	1.00	0.0	1.0
+FeatureD_Yes	0.00	0.00	0.00	1.00	0.0	0.00	0.0	0.00	0.00	1.00	...	0.0	0.0	0.0	1.00	0.0	0.00	1.00	0.00	0.0	0.0
+FeatureE_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureE_No	0.00	1.00	1.00	0.00	0.0	0.00	1.0	1.00	0.00	1.00	...	1.0	0.0	0.0	0.00	0.0	0.00	1.00	1.00	0.0	1.0
+FeatureE_Yes	1.00	0.00	0.00	1.00	1.0	0.00	0.0	0.00	0.00	0.00	...	0.0	0.0	0.0	1.00	0.0	1.00	0.00	0.00	0.0	0.0
+FeatureF_Maryville	0.00	0.00	0.00	0.00	0.0	1.00	0.0	0.00	1.00	0.00	...	0.0	1.0	1.0	0.00	1.0	0.00	0.00	0.00	1.0	0.0
+FeatureF_No	0.00	1.00	1.00	1.00	1.0	0.00	1.0	1.00	0.00	0.00	...	1.0	0.0	0.0	1.00	0.0	0.00	0.00	1.00	0.0	1.0
+FeatureF_Yes	1.00	0.00	0.00	0.00	0.0	0.00	0.0	0.00	0.00	1.00	...	0.0	0.0	0.0	0.00	0.0	1.00	1.00	0.00	0.0	0.0
+DuesFrequency_Month-to-month	1.00	1.00	1.00	1.00	1.0	1.00	1.0	1.00	1.00	1.00	...	0.0	1.0	0.0	0.00	0.0	1.00	0.00	1.00	1.0	1.0
+DuesFrequency_One year	0.00	0.00	0.00	0.00	0.0	0.00	0.0	0.00	0.00	0.00	...	1.0	0.0	0.0	0.00	1.0	0.00	0.00	0.00	0.0	0.0
+DuesFrequency_Two year	0.00	0.00	0.00	0.00	0.0	0.00	0.0	0.00	0.00	0.00	...	0.0	0.0	1.0	1.00	0.0	0.00	1.00	0.00	0.0	0.0
+PaperlessBilling_Yes	1.00	1.00	0.00	0.00	1.0	0.00	0.0	0.00	0.00	1.00	...	0.0	1.0	0.0	1.00	0.0	1.00	1.00	0.00	0.0	1.0
+PaymentMethod_Bank transfer (automatic)	0.00	1.00	0.00	1.00	0.0	0.00	0.0	0.00	0.00	1.00	...	0.0	0.0	0.0	0.00	0.0	0.00	1.00	0.00	0.0	0.0
+PaymentMethod_Credit card (automatic)	0.00	0.00	0.00	0.00	0.0	0.00	0.0	1.00	0.00	0.00	...	0.0	0.0	1.0	0.00	0.0	0.00	0.00	0.00	1.0	1.0
+PaymentMethod_Electronic check	1.00	0.00	0.00	0.00	1.0	0.00	0.0	0.00	0.00	0.00	...	0.0	0.0	0.0	1.00	1.0	1.00	0.00	1.00	0.0	0.0
+PaymentMethod_Mailed check	0.00	0.00	1.00	0.00	0.0	1.00	1.0	0.00	1.00	0.00	...	1.0	1.0	0.0	0.00	0.0	0.00	0.00	0.00	0.0	0.0
+39 rows × 2999 columns
+
+## identifying outliers
+
+Q1 = X.quantile(0.25)
+Q3 = X.quantile(0.75)
+IQR = Q3 - Q1
+print(IQR)
+
+print(X['MonthlyDues'].quantile(0.50)) 
+print(X['MonthlyDues'].quantile(0.95))
+
+# if a value in 'MonthlyDues' is greater than  which is the 95 percentile, then we replace that value with 70
+# which is the median
+X['MonthlyDues'] = np.where(X['MonthlyDues'] > 108, 70, X['MonthlyDues'])
+
+print(X['MonthsInUnion'].quantile(0.50)) 
+print(X['MonthsInUnion'].quantile(0.95))
+
+# if a value in 'MonthsInUnion' is greater than 72 which is the 95 percentile, then we replace that value with 30
+# which is the median
+X['MonthsInUnion'] = np.where(X['MonthsInUnion'] > 72, 30, X['MonthsInUnion'])
+
+print(X['TotalDues'].quantile(0.95)) 
+print(X['TotalDues'].quantile(0.50))
+
+# if a value in 'TotalDues' is greater than 7008 which is the 95 percentile, then we replace that value with 1424
+# which is the median
+X['TotalDues'] = np.where(X['TotalDues'] > 7008, 1424, X['TotalDues'])
+MonthsInUnion                                48.000
+MonthlyDues                                  50.250
+TotalDues                                  3516.725
+LeftUnion                                     1.000
+gender_Female                                 1.000
+Management_True                               0.000
+USAcitizen_Yes                                1.000
+Married_Yes                                   1.000
+ContinuingEd_Yes                              0.000
+StateOfResidence_MO                           1.000
+Connectivity_DSL                              1.000
+Connectivity_Fiber optic                      1.000
+Connectivity_No                               0.000
+FeatureA_Maryville                            0.000
+FeatureA_No                                   1.000
+FeatureA_Yes                                  1.000
+FeatureB_Maryville                            0.000
+FeatureB_No                                   1.000
+FeatureB_Yes                                  1.000
+FeatureC_Maryville                            0.000
+FeatureC_No                                   1.000
+FeatureC_Yes                                  1.000
+FeatureD_Maryville                            0.000
+FeatureD_No                                   1.000
+FeatureD_Yes                                  1.000
+FeatureE_Maryville                            0.000
+FeatureE_No                                   1.000
+FeatureE_Yes                                  1.000
+FeatureF_Maryville                            0.000
+FeatureF_No                                   1.000
+FeatureF_Yes                                  1.000
+DuesFrequency_Month-to-month                  1.000
+DuesFrequency_One year                        0.000
+DuesFrequency_Two year                        0.000
+PaperlessBilling_Yes                          1.000
+PaymentMethod_Bank transfer (automatic)       0.000
+PaymentMethod_Credit card (automatic)         0.000
+PaymentMethod_Electronic check                1.000
+PaymentMethod_Mailed check                    0.000
+dtype: float64
+70.8
+107.655
+28.0
+72.0
+7008.924999999999
+1424.4
+# Standardize Data using min_max_scaler
+min_max_scaler = MinMaxScaler()
+X_scaled = min_max_scaler.fit_transform(X)
+
+X_scaled = pd.DataFrame(X_scaled, columns = X.columns)
+
+X = X_scaled
+
+X
+MonthsInUnion	MonthlyDues	TotalDues	LeftUnion	gender_Female	Management_True	USAcitizen_Yes	Married_Yes	ContinuingEd_Yes	StateOfResidence_MO	...	FeatureF_No	FeatureF_Yes	DuesFrequency_Month-to-month	DuesFrequency_One year	DuesFrequency_Two year	PaperlessBilling_Yes	PaymentMethod_Bank transfer (automatic)	PaymentMethod_Credit card (automatic)	PaymentMethod_Electronic check	PaymentMethod_Mailed check
+0	0.722222	0.574790	0.807450	0.0	1.0	0.0	1.0	0.0	1.0	0.0	...	0.0	1.0	1.0	0.0	0.0	1.0	0.0	0.0	1.0	0.0
+1	0.097222	0.565826	0.068272	0.0	1.0	1.0	1.0	0.0	1.0	1.0	...	1.0	0.0	1.0	0.0	0.0	1.0	1.0	0.0	0.0	0.0
+2	0.138889	0.576471	0.105150	0.0	0.0	1.0	0.0	0.0	1.0	1.0	...	1.0	0.0	1.0	0.0	0.0	0.0	0.0	0.0	0.0	1.0
+3	0.847222	0.904202	0.849724	0.0	0.0	1.0	1.0	0.0	1.0	0.0	...	1.0	0.0	1.0	0.0	0.0	0.0	1.0	0.0	0.0	0.0
+4	0.041667	0.685714	0.037299	1.0	0.0	0.0	0.0	0.0	1.0	1.0	...	1.0	0.0	1.0	0.0	0.0	1.0	0.0	0.0	1.0	0.0
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+2994	0.305556	0.873950	0.297785	1.0	0.0	0.0	0.0	0.0	1.0	0.0	...	0.0	1.0	1.0	0.0	0.0	1.0	0.0	0.0	1.0	0.0
+2995	0.958333	0.835854	0.914687	0.0	1.0	1.0	1.0	1.0	1.0	0.0	...	0.0	1.0	0.0	0.0	1.0	1.0	1.0	0.0	0.0	0.0
+2996	0.055556	0.634734	0.039086	0.0	0.0	0.0	0.0	0.0	1.0	1.0	...	1.0	0.0	1.0	0.0	0.0	0.0	0.0	0.0	1.0	0.0
+2997	0.055556	0.019048	0.013510	0.0	1.0	1.0	0.0	1.0	1.0	1.0	...	0.0	0.0	1.0	0.0	0.0	0.0	0.0	1.0	0.0	0.0
+2998	0.013889	0.622969	0.010622	1.0	1.0	1.0	0.0	0.0	1.0	1.0	...	1.0	0.0	1.0	0.0	0.0	1.0	0.0	1.0	0.0	0.0
+2999 rows × 39 columns
+
+Visualizing the Data
+#Box Plots
+
+plt.figure(figsize = [12,4])
+
+# MonthsInUnion against LeftUnion
+plt.subplot(1,3,1)
+ax1 = sns.boxplot(x = "LeftUnion", y = "MonthsInUnion", data = X)
+
+ax1.tick_params(axis = 'x', labelrotation = 90, labelsize = 12)
+ax1.tick_params(axis = 'y', labelsize = 12)
+
+ax1.set_xlabel("LeftUnion", fontsize = 14)
+ax1.set_ylabel("MonthsInUnion", fontsize = 14)
+
+# MonthlyDues against LeftUnion
+plt.subplot(1,3,2)
+ax2 = sns.boxplot(x = "LeftUnion", y = "MonthlyDues", data = X)
+
+ax2.tick_params(axis = 'x', labelrotation = 90, labelsize = 12)
+ax2.tick_params(axis = 'y', labelsize = 12)
+
+ax2.set_xlabel("LeftUnion", fontsize = 14)
+ax2.set_ylabel("MonthlyDues", fontsize = 14)
+
+# Total Dues against LeftUnion
+plt.subplot(1,3,3)
+ax3 = sns.boxplot(x = "LeftUnion", y = "TotalDues", data = X)
+
+ax3.tick_params(axis = 'x', labelrotation = 90, labelsize = 12)
+ax3.tick_params(axis = 'y', labelsize = 12)
+
+ax3.set_xlabel("LeftUnion", fontsize = 14)
+ax3.set_ylabel("TotalDues", fontsize = 14)
+
+plt.tight_layout
+<function matplotlib.pyplot.tight_layout(*, pad=1.08, h_pad=None, w_pad=None, rect=None)>
+
+# Run PCA through sklearn decomposition
+
+pca = decomposition.PCA(n_components = 20)
+
+principalComponents = pca.fit_transform(X)
+
+pca_df = pd.DataFrame(data = principalComponents)
+
+pca.explained_variance_ratio_
+array([0.25953044, 0.14461524, 0.09212242, 0.04847886, 0.04071191,
+       0.0377996 , 0.03659462, 0.03396789, 0.03268014, 0.03072945,
+       0.02977744, 0.02816551, 0.02775268, 0.02604124, 0.02452637,
+       0.02213858, 0.01918544, 0.01776948, 0.01711554, 0.01259744])
+# Scree plot
+
+PC_values = np.arange(pca.n_components_) + 1
+
+plt.plot(PC_values, pca.explained_variance_ratio_, 'o-')
+plt.xlabel('number of components')
+plt.ylabel('cumulative explained variance')
+plt.title('Scree plot of primary components')
+plt.show()
+
+# Scatter plot
+
+plt.figure(figsize=(8,6))
+plt.scatter(X.MonthsInUnion,X.MonthlyDues, c=X.LeftUnion)
+plt.xlabel('MonthsInUnion')
+plt.ylabel('MonthlyDues')
+plt.title('Relationship betwee Monthly Dues by Months In Union')
+
+plt.tight_layout()
+plt.show()
+
+# Bivariate Plot
+
+sns.jointplot(data=X, x="MonthsInUnion", y="MonthlyDues", kind="reg")
+<seaborn.axisgrid.JointGrid at 0x225d72e9940>
+
+Models
+#Load the Packages
+
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+# Redefining Sclaed DataFrame by dropping "LeftUnion"
+X = X.drop(['LeftUnion'], 1)
+
+# Defining predictor target variable "LeftUnion"
+y = final.iloc[:,20]
+C:\Users\Ben\AppData\Local\Temp/ipykernel_15744/3915956145.py:2: FutureWarning: In a future version of pandas all arguments of DataFrame.drop except for the argument 'labels' will be keyword-only
+  X = X.drop(['LeftUnion'], 1)
+#Splitting Data into Training and Test Sets using 80/20 split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+print(X_train.shape)
+print(y_train.shape)
+print(X_test.shape)
+print(y_test.shape)
+(2399, 38)
+(2399,)
+(600, 38)
+(600,)
+# Linear Regression
+
+model = LinearRegression().fit(X_train, y_train)
+
+train_r2 = model.score(X_train, y_train)
+test_r2 = model.score(X_test, y_test)
+
+print("Training r-Squared:", round(train_r2,4))
+print("Testing r-Squared: ", round(test_r2,4))
+Training r-Squared: 0.2997
+Testing r-Squared:  0.3048
+# Decision Tree
+
+dt_train_acc = []
+
+depth_range = range(2,30)
+
+for d in depth_range:
+    np.random.seed(1)
+    temp_tree = DecisionTreeClassifier(max_depth=d)
+    temp_tree.fit(X_train, y_train)
+    dt_train_acc.append(temp_tree.score(X_train, y_train))
+    
+dt_idx = np.argmax(dt_train_acc)
+dt_opt_depth = depth_range[dt_idx]
+
+tree_model = DecisionTreeClassifier(max_depth = dt_opt_depth)
+tree_model.fit(X_train, y_train)
+
+print(f'{"Optimal value for max_depth:":<40}{dt_opt_depth}')
+print(f'{"Training Accuracy for Optimal Model:":<40}{round(tree_model.score(X_train, y_train),4)}')
+print(f'{"Test Accuracy for Optimal Model:":<40}{round(tree_model.score(X_test, y_test),4)}')
+Optimal value for max_depth:            20
+Training Accuracy for Optimal Model:    0.9967
+Test Accuracy for Optimal Model:        0.755
+# SVM
+
+svc_model = SVC()
+svc_model.fit(X_train, y_train)
+
+predictions = svc_model.predict(X_test)
+
+print(confusion_matrix(y_test,predictions))
+print(classification_report(y_test,predictions))
+[[395  38]
+ [ 88  79]]
+              precision    recall  f1-score   support
+
+           0       0.82      0.91      0.86       433
+           1       0.68      0.47      0.56       167
+
+    accuracy                           0.79       600
+   macro avg       0.75      0.69      0.71       600
+weighted avg       0.78      0.79      0.78       600
+
+# Random Forest
+
+rf_train_acc = []
+
+for d in depth_range:
+    np.random.seed(1)
+    temp_forest = RandomForestClassifier(max_depth=d, n_estimators=100)
+    temp_forest.fit(X_train, y_train)
+    rf_train_acc.append(temp_forest.score(X_train, y_train))
+    
+rf_idx = np.argmax(rf_train_acc)
+rf_opt_depth = depth_range[rf_idx]
+
+forest_mod = RandomForestClassifier(max_depth = rf_opt_depth, n_estimators=100)
+forest_mod.fit(X_train, y_train)
+
+print(f'{"Optimal value for max_depth:":<40}{rf_opt_depth}')
+print(f'{"Training Accuracy for Optimal Model:":<40}{round(forest_mod.score(X_train, y_train),4)}')
+print(f'{"Test Accuracy for Optimal Model:":<40}{round(tree_model.score(X_test, y_test),4)}')
+Optimal value for max_depth:            18
+Training Accuracy for Optimal Model:    0.9992
+Test Accuracy for Optimal Model:        0.755
+# Neural Network
+
+mlp = MLPClassifier(hidden_layer_sizes=(10,10,10), max_iter=1000)
+mlp.fit(X_train, y_train.values.ravel())
+
+predictions = mlp.predict(X_test)
+
+print(confusion_matrix(y_test,predictions))
+print(classification_report(y_test,predictions))
+[[383  50]
+ [ 82  85]]
+              precision    recall  f1-score   support
+
+           0       0.82      0.88      0.85       433
+           1       0.63      0.51      0.56       167
+
+    accuracy                           0.78       600
+   macro avg       0.73      0.70      0.71       600
+weighted avg       0.77      0.78      0.77       600
+
+I would reccomend SVM which has a slightly higher accuracy, 79%, than the Neural Network, 78%. Both the Decision Tree and Random Forest signify overfitting; which they are prone to do. A closer analysis of next time might include looking at depth, leaf nodes, samples of split, samples leaf, and weight fraction.
